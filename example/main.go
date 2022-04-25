@@ -1,5 +1,11 @@
 package main
 
+import (
+	"fmt"
+
+	"github.com/prestonTao/keystore"
+)
+
 func main() {
-	// keystore
+	fmt.Println("start")
 }
