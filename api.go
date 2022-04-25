@@ -1,9 +1,9 @@
 package keystore
 
 import (
-	"libp2parea/utils/crypto"
 	"crypto/sha256"
 	"fmt"
+	"keystore/crypto"
 
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/crypto/ed25519"

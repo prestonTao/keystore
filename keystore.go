@@ -1,8 +1,7 @@
 package keystore
 
 import (
-	"libp2parea/utils"
-	"libp2parea/utils/crypto"
+	// "libp2parea/utils"
 	"bytes"
 	"crypto/ed25519"
 	"crypto/sha256"
@@ -10,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"keystore/crypto"
 	"strconv"
 	"sync"
 
@@ -87,7 +87,7 @@ func (this *Keystore) Save() error {
 		return err
 	}
 	// engine.Log.Info(string(bs))
-	return utils.SaveFile(this.filepath, &bs)
+	return SaveFile(this.filepath, &bs)
 }
 
 /*

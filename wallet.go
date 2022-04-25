@@ -6,9 +6,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"keystore/crypto"
+	"keystore/crypto/dh"
 	"libp2parea/config"
-	"libp2parea/utils/crypto"
-	"libp2parea/utils/crypto/dh"
 	"sync"
 
 	"golang.org/x/crypto/ed25519"
