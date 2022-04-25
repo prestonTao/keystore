@@ -1,14 +1,13 @@
 package pubstore
 
 import (
-	"libp2parea/config"
-	"libp2parea/utils/crypto"
-	"libp2parea/utils/crypto/dh"
 	"bytes"
 	"crypto/aes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"keystore/crypto"
+	"keystore/crypto/dh"
 	"sync"
 
 	"golang.org/x/crypto/ed25519"
@@ -84,7 +83,7 @@ func (this *Wallet) GetNewAddr(password [32]byte) (crypto.AddressCoin, error) {
 		return nil, err
 	}
 	if !ok {
-		return nil, config.ERROR_password_fail
+		return nil, keystore.ERROR_password_fail
 	}
 	//密码验证通过
 
@@ -120,7 +119,7 @@ func (this *Wallet) GetNewAddr(password [32]byte) (crypto.AddressCoin, error) {
 	if err != nil {
 		return nil, err
 	}
-	addr := crypto.BuildAddr(config.AddrPre, puk)
+	addr := crypto.BuildAddr(keystore.AddrPre, puk)
 
 	// engine.Log.Info("地址 %s", addr.B58String())
 
@@ -258,11 +257,11 @@ func (this *Wallet) decrypt(pwdbs [32]byte) (ok bool, key, code []byte, err erro
 	//先用密码解密key和链编码
 	keyBs, err := crypto.DecryptCBC(this.Key, pwdbs[:], this.IV)
 	if err != nil {
-		return false, nil, nil, config.ERROR_password_fail
+		return false, nil, nil, ERROR_password_fail
 	}
 	codeBs, err := crypto.DecryptCBC(this.ChainCode, pwdbs[:], this.IV)
 	if err != nil {
-		return false, nil, nil, config.ERROR_password_fail
+		return false, nil, nil, ERROR_password_fail
 	}
 
 	//验证密码是否正确

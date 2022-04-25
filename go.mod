@@ -1,4 +1,4 @@
-module github.com/prestonTao/keystore
+module keystore
 
 go 1.18
 

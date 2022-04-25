@@ -22,8 +22,8 @@ SELF39feXYVAVmoMTeF4GBYN1gG2DZJYE1Bpp5
 package keystore
 
 import (
-	"libp2parea/utils/crypto"
 	"fmt"
+	"keystore/crypto"
 	"testing"
 )
 
@@ -32,7 +32,7 @@ var (
 	pass = "1234566"
 )
 
-func init() {
+func Init() {
 	fmt.Println("start....")
 	Load(path)
 	//CreateKeystore(path, pass)

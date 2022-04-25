@@ -13,6 +13,6 @@
 *.out
 go.sum
 
-
+example/conf/*
 
 

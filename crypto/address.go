@@ -1,9 +1,9 @@
 package crypto
 
 import (
-	"libp2parea/utils/base58"
 	"bytes"
 	"crypto/sha256"
+	"keystore/base58"
 
 	"golang.org/x/crypto/ripemd160"
 )

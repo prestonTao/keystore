@@ -1,7 +1,7 @@
 package kstore
 
 import (
-	"libp2parea/keystore"
+	"keystore"
 )
 
 //export wallet

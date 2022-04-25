@@ -1,12 +1,12 @@
 package x3dh
 
 import (
-	"libp2parea/utils/crypto/dh"
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"keystore/crypto/dh"
 	"testing"
 
 	"golang.org/x/crypto/hkdf"

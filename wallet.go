@@ -8,11 +8,12 @@ import (
 	"errors"
 	"keystore/crypto"
 	"keystore/crypto/dh"
-	"libp2parea/config"
 	"sync"
 
 	"golang.org/x/crypto/ed25519"
 )
+
+var AddrPre = "TEST"
 
 type Wallet struct {
 	Key       []byte         `json:"key"`       //生成主密钥的随机数
@@ -128,7 +129,7 @@ func (this *Wallet) GetNewAddr(password [32]byte) (crypto.AddressCoin, error) {
 	if err != nil {
 		return nil, err
 	}
-	addr := crypto.BuildAddr(config.AddrPre, puk)
+	addr := crypto.BuildAddr(AddrPre, puk)
 
 	// engine.Log.Info("地址 %s", addr.B58String())
 

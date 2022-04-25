@@ -1,7 +1,6 @@
 package keystore
 
 import (
-	// "libp2parea/utils"
 	"bytes"
 	"crypto/ed25519"
 	"crypto/sha256"

@@ -1,9 +1,9 @@
 package crypto
 
 import (
-	"libp2parea/utils/base58"
 	"crypto/rand"
 	"fmt"
+	"keystore/base58"
 	"testing"
 
 	"golang.org/x/crypto/ed25519"

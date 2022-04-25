@@ -1,16 +1,11 @@
 package keystore
 
 import (
-	// "libp2parea/engine"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
-
-	jsoniter "github.com/json-iterator/go"
 )
-
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 /*
 	检查目录是否存在，不存在则创建
@@ -66,6 +61,7 @@ func SaveJsonFile(name string, o interface{}) error {
 	2.
 */
 func SaveFile(name string, bs *[]byte) error {
+	CheckCreateDir(name)
 	//创建临时文件
 	now := strconv.Itoa(int(time.Now().Unix()))
 	tempname := name + "." + now

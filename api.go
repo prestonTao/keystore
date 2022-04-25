@@ -11,7 +11,7 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-var keystore *Keystore
+var keystoreStatic *Keystore
 
 /*
 	加载种子
@@ -22,7 +22,7 @@ func Load(filepath string) error {
 	if err != nil {
 		return err
 	}
-	keystore = store
+	keystoreStatic = store
 	return nil
 }
 
@@ -40,7 +40,7 @@ func CreateKeystore(fileAbsPath, password string) error {
 	if err != nil {
 		return err
 	}
-	keystore = ks
+	keystoreStatic = ks
 	return nil
 }
 
@@ -62,7 +62,7 @@ func CreateKeystoreRand(fileAbsPath string, rand1, rand2 []byte, password string
 	if err != nil {
 		return err
 	}
-	keystore = ks
+	keystoreStatic = ks
 	return nil
 }
 
@@ -86,14 +86,14 @@ func CreateKeystoreRand(fileAbsPath string, rand1, rand2 []byte, password string
 	获取钱包地址列表，不包括导入的钱包地址
 */
 func GetAddr() []*AddressInfo {
-	return keystore.GetAddr()
+	return keystoreStatic.GetAddr()
 }
 
 /*
 	获取本钱包的网络地址
 */
 func GetNetAddr(pwd string) (ed25519.PrivateKey, ed25519.PublicKey, error) {
-	return keystore.GetNetAddrPuk(pwd)
+	return keystoreStatic.GetNetAddrPuk(pwd)
 }
 
 /*
@@ -101,29 +101,29 @@ func GetNetAddr(pwd string) (ed25519.PrivateKey, ed25519.PublicKey, error) {
 */
 func GetAddrAll() []*AddressInfo {
 	addrs := make([]*AddressInfo, 0)
-	keystore.lock.RLock()
-	for _, one := range keystore.Wallets {
+	keystoreStatic.lock.RLock()
+	for _, one := range keystoreStatic.Wallets {
 		addrs = append(addrs, one.GetAddr()...)
 	}
-	keystore.lock.RUnlock()
+	keystoreStatic.lock.RUnlock()
 	return addrs
 }
 
 //获取一个新的地址
 func GetNewAddr(password string) (crypto.AddressCoin, error) {
 	pwd := sha256.Sum256([]byte(password))
-	w := keystore.Wallets[keystore.Coinbase]
+	w := keystoreStatic.Wallets[keystoreStatic.Coinbase]
 	addrCoin, err := w.GetNewAddr(pwd)
 	if err != nil {
 		return nil, err
 	}
-	err = keystore.Save()
+	err = keystoreStatic.Save()
 	return addrCoin, err
 }
 
 //获取基础地址
 func GetCoinbase() *AddressInfo {
-	wallet := keystore.Wallets[keystore.Coinbase]
+	wallet := keystoreStatic.Wallets[keystoreStatic.Coinbase]
 	return wallet.GetCoinbase()
 }
 
@@ -131,7 +131,7 @@ func GetCoinbase() *AddressInfo {
 	获取DH公钥
 */
 func GetDHKeyPair() DHKeyPair {
-	wallet := keystore.Wallets[keystore.DHIndex]
+	wallet := keystoreStatic.Wallets[keystoreStatic.DHIndex]
 	return wallet.GetDHbase()
 }
 
@@ -140,8 +140,8 @@ func GetDHKeyPair() DHKeyPair {
 */
 func GetKeyByAddr(addr crypto.AddressCoin, password string) (rand []byte, prk ed25519.PrivateKey, puk ed25519.PublicKey, err error) {
 	pwd := sha256.Sum256([]byte(password))
-	keystore.lock.RLock()
-	for _, one := range keystore.Wallets {
+	keystoreStatic.lock.RLock()
+	for _, one := range keystoreStatic.Wallets {
 		rand, prk, puk, err = one.GetKeyByAddr(addr, pwd)
 		if err != nil {
 			break
@@ -149,13 +149,13 @@ func GetKeyByAddr(addr crypto.AddressCoin, password string) (rand []byte, prk ed
 	}
 	if len(puk) == 0 {
 		fmt.Println("公钥不存在")
-		fmt.Printf("wallet:%+v", keystore.Wallets)
+		fmt.Printf("wallet:%+v", keystoreStatic.Wallets)
 	}
 	if len(prk) == 0 {
 		fmt.Println("私钥不存在")
-		fmt.Printf("wallet:%+v", keystore.Wallets)
+		fmt.Printf("wallet:%+v", keystoreStatic.Wallets)
 	}
-	keystore.lock.RUnlock()
+	keystoreStatic.lock.RUnlock()
 	return
 }
 
@@ -164,14 +164,14 @@ func GetKeyByAddr(addr crypto.AddressCoin, password string) (rand []byte, prk ed
 */
 func GetKeyByPuk(puk []byte, password string) (rand []byte, prk ed25519.PrivateKey, err error) {
 	pwd := sha256.Sum256([]byte(password))
-	keystore.lock.RLock()
-	for _, one := range keystore.Wallets {
+	keystoreStatic.lock.RLock()
+	for _, one := range keystoreStatic.Wallets {
 		rand, prk, err = one.GetKeyByPuk(puk, pwd)
 		if err != nil {
 			break
 		}
 	}
-	keystore.lock.RUnlock()
+	keystoreStatic.lock.RUnlock()
 	return
 }
 
@@ -180,13 +180,13 @@ func GetKeyByPuk(puk []byte, password string) (rand []byte, prk ed25519.PrivateK
 */
 func GetPukByAddr(addr crypto.AddressCoin) (puk ed25519.PublicKey, ok bool) {
 	ok = false
-	keystore.lock.RLock()
-	for _, one := range keystore.Wallets {
+	keystoreStatic.lock.RLock()
+	for _, one := range keystoreStatic.Wallets {
 		if puk, ok = one.GetPukByAddr(addr); ok {
 			break
 		}
 	}
-	keystore.lock.RUnlock()
+	keystoreStatic.lock.RUnlock()
 	return
 }
 
@@ -200,14 +200,14 @@ func SetCoinbase(index int) {
 */
 func FindAddress(addr crypto.AddressCoin) (addrInfo AddressInfo, ok bool) {
 	ok = false
-	keystore.lock.RLock()
-	for _, one := range keystore.Wallets {
+	keystoreStatic.lock.RLock()
+	for _, one := range keystoreStatic.Wallets {
 		addrInfo, ok = one.FindAddress(addr)
 		if ok {
 			break
 		}
 	}
-	keystore.lock.RUnlock()
+	keystoreStatic.lock.RUnlock()
 	return
 }
 
@@ -216,14 +216,14 @@ func FindAddress(addr crypto.AddressCoin) (addrInfo AddressInfo, ok bool) {
 */
 func FindPuk(puk []byte) (addrInfo AddressInfo, ok bool) {
 	ok = false
-	keystore.lock.RLock()
-	for _, one := range keystore.Wallets {
+	keystoreStatic.lock.RLock()
+	for _, one := range keystoreStatic.Wallets {
 		addrInfo, ok = one.FindPuk(puk)
 		if ok {
 			break
 		}
 	}
-	keystore.lock.RUnlock()
+	keystoreStatic.lock.RUnlock()
 	return
 }
 
@@ -243,8 +243,8 @@ func Sign(prk ed25519.PrivateKey, content []byte) []byte {
 func UpdatePwd(oldpwd, newpwd string) (ok bool, err error) {
 	oldHash := sha256.Sum256([]byte(oldpwd))
 	newHash := sha256.Sum256([]byte(newpwd))
-	keystore.lock.RLock()
-	for _, one := range keystore.Wallets {
+	keystoreStatic.lock.RLock()
+	for _, one := range keystoreStatic.Wallets {
 		ok, err = one.UpdatePwd(oldHash, newHash)
 		if err != nil {
 			break
@@ -253,8 +253,8 @@ func UpdatePwd(oldpwd, newpwd string) (ok bool, err error) {
 			break
 		}
 	}
-	keystore.lock.RUnlock()
-	err = keystore.Save()
+	keystoreStatic.lock.RUnlock()
+	err = keystoreStatic.Save()
 	return
 }
 
@@ -292,12 +292,12 @@ func UpdatePwd(oldpwd, newpwd string) (ok bool, err error) {
 // }
 
 func Println() {
-	bs, _ := json.Marshal(keystore)
+	bs, _ := json.Marshal(keystoreStatic)
 
 	fmt.Println("keystore\n", string(bs))
 }
 
 //export keystore
 func GetKeyStore() *Keystore {
-	return keystore
+	return keystoreStatic
 }
