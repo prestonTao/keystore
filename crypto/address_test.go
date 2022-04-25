@@ -3,7 +3,7 @@ package crypto
 import (
 	"crypto/rand"
 	"fmt"
-	"keystore/base58"
+	"github.com/prestonTao/keystore/base58"
 	"testing"
 
 	"golang.org/x/crypto/ed25519"

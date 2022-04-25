@@ -3,7 +3,7 @@ package keystore
 import (
 	"crypto/sha256"
 	"fmt"
-	"keystore/crypto"
+	"github.com/prestonTao/keystore/crypto"
 
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/crypto/ed25519"

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"keystore"
-	"keystore/crypto"
+	"github.com/prestonTao/keystore/crypto"
 	"strconv"
 	"sync"
 

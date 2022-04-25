@@ -23,7 +23,7 @@ package keystore
 
 import (
 	"fmt"
-	"keystore/crypto"
+	"github.com/prestonTao/keystore/crypto"
 	"testing"
 )
 

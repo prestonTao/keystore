@@ -8,7 +8,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"keystore/crypto"
+	"github.com/prestonTao/keystore/crypto"
 	"strconv"
 	"sync"
 

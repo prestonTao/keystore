@@ -3,7 +3,7 @@ package crypto
 import (
 	"bytes"
 	"crypto/sha256"
-	"keystore/base58"
+	"github.com/prestonTao/keystore/base58"
 
 	"golang.org/x/crypto/ripemd160"
 )

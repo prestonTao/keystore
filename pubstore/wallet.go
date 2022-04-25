@@ -6,8 +6,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"keystore/crypto"
-	"keystore/crypto/dh"
+	"github.com/prestonTao/keystore/crypto"
+	"github.com/prestonTao/keystore/crypto/dh"
 	"sync"
 
 	"golang.org/x/crypto/ed25519"

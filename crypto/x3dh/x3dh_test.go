@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"keystore/crypto/dh"
+	"github.com/prestonTao/keystore/crypto/dh"
 	"testing"
 
 	"golang.org/x/crypto/hkdf"

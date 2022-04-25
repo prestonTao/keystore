@@ -4,7 +4,7 @@ import (
 	//"libp2parea/chain_witness_vote/mining"
 	"bytes"
 	"crypto/sha256"
-	"keystore/crypto"
+	"github.com/prestonTao/keystore/crypto"
 
 	//"encoding/hex"
 	//"encoding/json"
