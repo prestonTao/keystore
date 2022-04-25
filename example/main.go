@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"keystore"
+	"github.com/prestonTao/keystore"
 )
 
 func main() {
