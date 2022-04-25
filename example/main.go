@@ -8,4 +8,5 @@ import (
 
 func main() {
 	fmt.Println("start")
+	keystore.Load("nihao")
 }
