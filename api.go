@@ -3,6 +3,7 @@ package keystore
 import (
 	"crypto/sha256"
 	"fmt"
+
 	"github.com/prestonTao/keystore/crypto"
 
 	jsoniter "github.com/json-iterator/go"
@@ -16,8 +17,9 @@ var keystoreStatic *Keystore
 /*
 	加载种子
 */
-func Load(filepath string) error {
-	store := NewKeystore(filepath)
+func Load(fileAbsPath, addrPre string) error {
+	addrPreStatic = addrPre
+	store := NewKeystore(fileAbsPath)
 	err := store.Load()
 	if err != nil {
 		return err
@@ -29,7 +31,8 @@ func Load(filepath string) error {
 /*
 	创建一个新的keystore
 */
-func CreateKeystore(fileAbsPath, password string) error {
+func CreateKeystore(fileAbsPath, addrPre, password string) error {
+	addrPreStatic = addrPre
 	ks := NewKeystore(fileAbsPath)
 	pwd := sha256.Sum256([]byte(password))
 	err := ks.CreateNewWallet(pwd)
