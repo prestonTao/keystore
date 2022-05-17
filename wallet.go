@@ -13,7 +13,15 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
+var addrPreStaticLock = new(sync.RWMutex)
 var addrPreStatic = "TEST"
+
+func GetAddrPre() (pre string) {
+	addrPreStaticLock.RLock()
+	pre = addrPreStatic
+	addrPreStaticLock.RUnlock()
+	return
+}
 
 type Wallet struct {
 	Key       []byte         `json:"key"`       //生成主密钥的随机数

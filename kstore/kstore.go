@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"keystore"
-	"libp2parea/config"
-	"libp2parea/utils"
-	"libp2parea/utils/crypto"
 	"path/filepath"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/mr-tron/base58"
+	"github.com/prestonTao/keystore"
+	"github.com/prestonTao/utils"
+	"github.com/prestonTao/utils/crypto"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -26,7 +25,7 @@ func NewKStore() *KStore {
 }
 func (ks *KStore) SetPath(path string) {
 	ks.Path = path
-	ks.Keyname = config.Core_keystore
+	ks.Keyname = "key.txt"
 }
 
 //创建钱包
@@ -38,12 +37,12 @@ func (ks *KStore) Create(pwd string) error {
 		return err
 	}
 	if exist {
-		err := keystore.Load(fileAbsPath)
+		err := keystore.Load(fileAbsPath, keystore.GetAddrPre())
 		if err != nil {
 			return err
 		}
 	} else {
-		err = keystore.CreateKeystore(fileAbsPath, pwd)
+		err = keystore.CreateKeystore(fileAbsPath, keystore.GetAddrPre(), pwd)
 		if err != nil {
 			return err
 		}
@@ -82,7 +81,7 @@ func Decode(s string) ([]Seed, error) {
 
 //根据种子生成keystore
 func SeedtoFile(path, password string, seed []Seed) error {
-	paths := filepath.Join(path, config.Core_keystore)
+	paths := filepath.Join(path, "key.txt")
 	kst := keystore.NewKeystore(paths)
 	for _, val := range seed {
 		//验证密码是否正确

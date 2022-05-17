@@ -1,14 +1,15 @@
-module github.com/prestonTao/keystore
+module kstore
 
 go 1.18
 
-// replace github.com/prestonTao/utils => ../utils
+replace github.com/prestonTao/utils => ../../utils
 
 require (
 	github.com/json-iterator/go v1.1.12
 	github.com/mr-tron/base58 v1.2.0
-	github.com/prestonTao/utils v0.0.0-20220517065227-0040d98ebbcc
-	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
+	github.com/prestonTao/keystore v0.0.0-20220429011851-9db77f1a6280
+	github.com/prestonTao/utils v0.0.0-20220513040022-ccd0eb3f3bc1
+	golang.org/x/crypto v0.0.0-20220511200225-c6db032c6c88
 )
 
 require (

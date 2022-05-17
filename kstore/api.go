@@ -1,7 +1,7 @@
 package kstore
 
 import (
-	"keystore"
+	"github.com/prestonTao/keystore"
 )
 
 //export wallet

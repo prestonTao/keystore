@@ -1,14 +1,11 @@
 package kstore
 
 import (
-	"libp2parea/chain_witness_vote/mining"
-	"libp2parea/utils/crypto"
 	"bytes"
 	"crypto/sha256"
-	"encoding/hex"
 	"errors"
-	"fmt"
 
+	"github.com/prestonTao/keystore/crypto"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -66,27 +63,27 @@ type Item struct {
 }
 
 //解析txitem
-func ParseTxItems(jsonstr string) ([]*mining.TxItem, error) {
-	tdata := TData{}
-	// err := json.Unmarshal([]byte(jsonstr), &tdata)
-	decoder := json.NewDecoder(bytes.NewBuffer([]byte(jsonstr)))
-	decoder.UseNumber()
-	err := decoder.Decode(&tdata)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	//fmt.Printf("%+v", tdata)
-	var txitem []*mining.TxItem
-	for _, val := range tdata.Data {
-		addr := crypto.AddressFromB58String(val.Addr)
-		txid, _ := hex.DecodeString(val.Txid)
-		it := &mining.TxItem{Height: val.Height, Addr: &addr, Txid: txid, Value: val.Value, VoutIndex: val.VoutIndex, VoteType: val.VoteType}
-		txitem = append(txitem, it)
-	}
-	//fmt.Printf("%+v", txitem[0])
-	return txitem, nil
-}
+// func ParseTxItems(jsonstr string) ([]*mining.TxItem, error) {
+// 	tdata := TData{}
+// 	// err := json.Unmarshal([]byte(jsonstr), &tdata)
+// 	decoder := json.NewDecoder(bytes.NewBuffer([]byte(jsonstr)))
+// 	decoder.UseNumber()
+// 	err := decoder.Decode(&tdata)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return nil, err
+// 	}
+// 	//fmt.Printf("%+v", tdata)
+// 	var txitem []*mining.TxItem
+// 	for _, val := range tdata.Data {
+// 		addr := crypto.AddressFromB58String(val.Addr)
+// 		txid, _ := hex.DecodeString(val.Txid)
+// 		it := &mining.TxItem{Height: val.Height, Addr: &addr, Txid: txid, Value: val.Value, VoutIndex: val.VoutIndex, VoteType: val.VoteType}
+// 		txitem = append(txitem, it)
+// 	}
+// 	//fmt.Printf("%+v", txitem[0])
+// 	return txitem, nil
+// }
 
 //解析交易
 // func ParseTxItr(bs []byte) (mining.TxItr, error) {
@@ -111,40 +108,40 @@ func ParseAddrData(jsonstr string) (map[string]uint64, error) {
 
 //验证待签名数据是否正确
 //addrdata {"XXXX":1000,"YYYYY":2000}
-func CheckAddrData(addrdata map[string]uint64, vout *[]mining.Vout, returnaddr crypto.AddressCoin) bool {
-	if len(*vout) == 0 || len(addrdata) == 0 {
-		//fmt.Println("0000", len(*vout), len(addrdata))
-		return false
-	}
-	for _, val := range *vout {
-		//如果是退款地址，单独验证，这里退出
-		if bytes.Equal(val.Address, returnaddr) {
-			continue
-		}
-		addr := val.Address
-		if addrdata[addr.B58String()] != val.Value {
-			//fmt.Println("2222", addrdata, addr.B58String(), val.Value)
-			return false
-		}
-	}
-	//vout数量多于1个，则数据错误,因为最多多一个找零地址
-	if len(*vout)-len(addrdata) > 1 || len(*vout)-len(addrdata) < 0 {
-		//fmt.Println("3333", len(*vout), len(addrdata))
-		return false
-	}
-	//如果vout数量与转出地址数量不一致，则判断找零地址是否存在
-	if len(*vout)-len(addrdata) == 1 {
-		var returnaddrbool bool
-		for _, val := range *vout {
-			if bytes.Equal(val.Address, returnaddr) {
-				//fmt.Println("111", val.Address, returnaddr.B58String())
-				returnaddrbool = true
-				continue
-			}
-		}
-		if !returnaddrbool {
-			return false
-		}
-	}
-	return true
-}
+// func CheckAddrData(addrdata map[string]uint64, vout *[]mining.Vout, returnaddr crypto.AddressCoin) bool {
+// 	if len(*vout) == 0 || len(addrdata) == 0 {
+// 		//fmt.Println("0000", len(*vout), len(addrdata))
+// 		return false
+// 	}
+// 	for _, val := range *vout {
+// 		//如果是退款地址，单独验证，这里退出
+// 		if bytes.Equal(val.Address, returnaddr) {
+// 			continue
+// 		}
+// 		addr := val.Address
+// 		if addrdata[addr.B58String()] != val.Value {
+// 			//fmt.Println("2222", addrdata, addr.B58String(), val.Value)
+// 			return false
+// 		}
+// 	}
+// 	//vout数量多于1个，则数据错误,因为最多多一个找零地址
+// 	if len(*vout)-len(addrdata) > 1 || len(*vout)-len(addrdata) < 0 {
+// 		//fmt.Println("3333", len(*vout), len(addrdata))
+// 		return false
+// 	}
+// 	//如果vout数量与转出地址数量不一致，则判断找零地址是否存在
+// 	if len(*vout)-len(addrdata) == 1 {
+// 		var returnaddrbool bool
+// 		for _, val := range *vout {
+// 			if bytes.Equal(val.Address, returnaddr) {
+// 				//fmt.Println("111", val.Address, returnaddr.B58String())
+// 				returnaddrbool = true
+// 				continue
+// 			}
+// 		}
+// 		if !returnaddrbool {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }

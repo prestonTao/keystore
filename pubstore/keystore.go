@@ -7,13 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"keystore"
-	"github.com/prestonTao/keystore/crypto"
 	"strconv"
 	"sync"
 
 	"github.com/mr-tron/base58"
-
+	"github.com/prestonTao/keystore/crypto"
+	"github.com/prestonTao/utils"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/hkdf"
 )
