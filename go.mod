@@ -7,8 +7,8 @@ go 1.18
 require (
 	github.com/json-iterator/go v1.1.12
 	github.com/mr-tron/base58 v1.2.0
-	github.com/prestonTao/utils v0.0.0-20220517065227-0040d98ebbcc
-	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
+	github.com/prestonTao/utils v0.0.0-20220517073115-06a4120f1fc7
+	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898
 )
 
 require (
