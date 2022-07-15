@@ -2,6 +2,7 @@ package kstore
 
 //种子导出
 type Seed struct {
+	Seed      []byte //种子
 	Key       []byte //生成主密钥的随机数
 	ChainCode []byte //主KDF链编码
 	IV        []byte //aes加密向量

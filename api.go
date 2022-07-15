@@ -4,9 +4,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/prestonTao/keystore/crypto"
-
 	jsoniter "github.com/json-iterator/go"
+	"github.com/prestonTao/keystore/crypto"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -50,14 +49,14 @@ func CreateKeystore(fileAbsPath, addrPre, password string) error {
 /*
 	使用随机数创建一个新的keystore
 */
-func CreateKeystoreRand(fileAbsPath string, rand1, rand2 []byte, password string) error {
+func CreateKeystoreRand(fileAbsPath string, seed, rand1, rand2 []byte, password string) error {
 
 	// rand1Bs := sha256.Sum256([]byte(rand1))
 	// rand2Bs := sha256.Sum256([]byte(rand2))
 	pwd := sha256.Sum256([]byte(password))
 
 	ks := NewKeystore(fileAbsPath)
-	err := ks.CreateNewWalletRand(rand1, rand2, pwd)
+	err := ks.CreateNewWalletRand(seed, rand1, rand2, pwd)
 	if err != nil {
 		return err
 	}
@@ -151,12 +150,12 @@ func GetKeyByAddr(addr crypto.AddressCoin, password string) (rand []byte, prk ed
 		}
 	}
 	if len(puk) == 0 {
-		fmt.Println("公钥不存在")
-		fmt.Printf("wallet:%+v", keystoreStatic.Wallets)
+		// fmt.Println("公钥不存在")
+		// fmt.Printf("wallet:%+v", keystoreStatic.Wallets)
 	}
 	if len(prk) == 0 {
-		fmt.Println("私钥不存在")
-		fmt.Printf("wallet:%+v", keystoreStatic.Wallets)
+		// fmt.Println("私钥不存在")
+		// fmt.Printf("wallet:%+v", keystoreStatic.Wallets)
 	}
 	keystoreStatic.lock.RUnlock()
 	return

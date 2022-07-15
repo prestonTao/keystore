@@ -19,9 +19,32 @@ func Ripemd160(bs []byte) []byte {
 }
 
 //@params password key/chaincode(加密后) iv checkhash
-func CheckPass(spass string, skey, scode, siv, cHash []byte, ripemd bool) (bool, error) {
+func CheckPass(spass string, seed, skey, scode, siv, cHash []byte, ripemd bool) (bool, error) {
 	//验证密码是否正确
 	pwd := sha256.Sum256([]byte(spass))
+	if seed != nil && len(seed) > 0 {
+		//解密key
+		seedBs, s := crypto.DecryptCBC(seed, pwd[:], siv)
+		if s != nil {
+			return false, s
+		}
+		// checkHash := append(keyBs, codeBs...)
+		h := sha256.New()
+		h.Write(seedBs)
+		checkHash := h.Sum(pwd[:])
+		var ocheckHash []byte
+		if ripemd {
+			ocheckHash = Ripemd160(checkHash)
+		} else {
+			ocheckHash = checkHash
+		}
+		if bytes.Equal(ocheckHash, cHash) {
+			return true, nil
+		} else {
+			return false, errors.New("password error")
+		}
+	}
+
 	//解密key
 	keyBs, s := crypto.DecryptCBC(skey, pwd[:], siv)
 	if s != nil {

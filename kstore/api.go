@@ -12,11 +12,11 @@ func Export(pass string) string {
 	for _, val := range ks.Wallets {
 		//fmt.Printf("%+v", val)
 		//验证密码是否正确
-		ok, err := CheckPass(pass, val.Key, val.ChainCode, val.IV, val.CheckHash, false)
+		ok, err := CheckPass(pass, val.Seed, val.Key, val.ChainCode, val.IV, val.CheckHash, false)
 		if !ok {
 			return Out(500, err.Error())
 		}
-		sd := Seed{Key: val.Key, ChainCode: val.ChainCode, IV: val.IV, CheckHash: Ripemd160(val.CheckHash), Index: len(val.Addrs)}
+		sd := Seed{Seed: val.Seed, Key: val.Key, ChainCode: val.ChainCode, IV: val.IV, CheckHash: Ripemd160(val.CheckHash), Index: len(val.Addrs)}
 		seeds = append(seeds, sd)
 	}
 	s := Encode(seeds)
@@ -26,7 +26,8 @@ func Export(pass string) string {
 
 //import wallet
 //@param path password seed
-func Import(path, password, seed string) string {
+func Import(path, password, seed, pre string) string {
+	keystore.SetAddrPre(pre)
 	ss, err := Decode(seed)
 	if err != nil {
 		return Out(500, err.Error())

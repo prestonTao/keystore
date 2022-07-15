@@ -8,10 +8,10 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"github.com/prestonTao/keystore/crypto"
 	"strconv"
 	"sync"
 
+	"github.com/prestonTao/keystore/crypto"
 	"golang.org/x/crypto/hkdf"
 )
 
@@ -62,6 +62,10 @@ func (this *Keystore) Load() error {
 			//钱包文件损坏:第" + strconv.Itoa(i+1) + "个钱包不完整
 			return errors.New("Damaged wallet file: No" + strconv.Itoa(i+1) + "Wallet incomplete")
 		}
+		// if walletOne.Seed != nil && len(walletOne.Seed) > 0 {
+		// 	walletOne.IV = salt
+		// }
+
 		for j, one := range walletOne.Addrs {
 			addrInfo := walletOne.Addrs[j]
 			addrStr := one.Addr.B58String()
@@ -69,7 +73,6 @@ func (this *Keystore) Load() error {
 
 			walletOne.addrMap.Store(addrStr, addrInfo)
 			walletOne.pukMap.Store(hex.EncodeToString(one.Puk), addrInfo)
-
 		}
 	}
 	return nil
@@ -81,7 +84,28 @@ func (this *Keystore) Load() error {
 func (this *Keystore) Save() error {
 	// engine.Log.Info("v%", this.Wallets)
 
-	bs, err := json.Marshal(this.Wallets)
+	newWallets := make([]*Wallet, 0)
+	for _, one := range this.Wallets {
+		walletOne := Wallet{
+			Seed:      one.Seed,      //种子
+			Key:       one.Key,       //生成主密钥的随机数
+			ChainCode: one.ChainCode, //主KDF链编码
+			IV:        one.IV,        //aes加密向量
+			CheckHash: one.CheckHash, //主私钥和链编码加密验证hash值
+			Coinbase:  one.Coinbase,  //当前默认使用的收付款地址
+			Addrs:     one.Addrs,     //已经生成的地址列表
+			DHKey:     one.DHKey,     //DH密钥
+		}
+		if one.Seed != nil && len(one.Seed) > 0 {
+			walletOne.Key = nil
+			walletOne.ChainCode = nil
+		} else {
+			walletOne.Seed = nil
+		}
+		newWallets = append(newWallets, &walletOne)
+	}
+
+	bs, err := json.Marshal(newWallets)
 	if err != nil {
 		return err
 	}
@@ -93,22 +117,27 @@ func (this *Keystore) Save() error {
 	创建一个新的种子文件
 */
 func (this *Keystore) CreateNewWallet(password [32]byte) error {
-	key, err := crypto.Rand32Byte()
+	seed, err := crypto.Rand32Byte()
 	if err != nil {
 		return err
 	}
-	chainCode, err := crypto.Rand32Byte()
-	if err != nil {
-		return err
-	}
-	iv, err := crypto.Rand16Byte()
-	if err != nil {
-		return err
-	}
+
+	// key, err := crypto.Rand32Byte()
+	// if err != nil {
+	// 	return err
+	// }
+	// chainCode, err := crypto.Rand32Byte()
+	// if err != nil {
+	// 	return err
+	// }
+	// iv, err := crypto.Rand16Byte()
+	// if err != nil {
+	// 	return err
+	// }
 
 	// fmt.Println("创建的随机数长度", len(key), len(chainCode), len(iv))
 
-	wallet, err := NewWallet(key, chainCode, iv, password)
+	wallet, err := NewWallet(&seed, nil, nil, nil, &password)
 	if err != nil {
 		return err
 	}
@@ -121,23 +150,31 @@ func (this *Keystore) CreateNewWallet(password [32]byte) error {
 /*
 	使用随机数创建一个新的种子文件
 */
-func (this *Keystore) CreateNewWalletRand(rand1, rand2 []byte, password [32]byte) error {
+func (this *Keystore) CreateNewWalletRand(seedSrc, rand1, rand2 []byte, password [32]byte) error {
 
-	var key, chainCode [32]byte
-	var iv [16]byte
+	var wallet *Wallet
+	var err error
+	if seedSrc != nil && len(seedSrc) > 0 {
+		var seed [32]byte
+		copy(seed[:], seedSrc)
+		wallet, err = NewWallet(&seed, nil, nil, nil, &password)
+	} else {
+		var key, chainCode [32]byte
+		var iv [16]byte
 
-	r := hkdf.New(sha256.New, rand1, rand2, []byte("rsZUpEuXUqqwXBvSy3EcievAh4cMj6QL"))
-	buf := make([]byte, 96)
-	_, _ = io.ReadFull(r, buf)
-	copy(key[:], buf[:32])
-	copy(chainCode[:], buf[32:64])
-	copy(iv[:], buf[64:80])
+		r := hkdf.New(sha256.New, rand1, rand2, []byte("rsZUpEuXUqqwXBvSy3EcievAh4cMj6QL"))
+		buf := make([]byte, 96)
+		_, _ = io.ReadFull(r, buf)
+		copy(key[:], buf[:32])
+		copy(chainCode[:], buf[32:64])
+		copy(iv[:], buf[64:80])
+		wallet, err = NewWallet(nil, &key, &chainCode, &iv, &password)
+	}
 
 	// pwd := sha256.Sum256(rand)
 
 	// fmt.Println("创建的随机数长度", len(key), len(chainCode), len(iv))
 
-	wallet, err := NewWallet(key, chainCode, iv, password)
 	if err != nil {
 		return err
 	}

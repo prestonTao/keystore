@@ -22,29 +22,35 @@ SELF39feXYVAVmoMTeF4GBYN1gG2DZJYE1Bpp5
 package keystore
 
 import (
-	"fmt"
-	"github.com/prestonTao/keystore/crypto"
+	// "fmt"
+	// "math/big"
 	"testing"
+	// "github.com/prestonTao/keystore/crypto"
 )
 
-var (
-	path = "wallet.txt"
-	pass = "1234566"
-)
+// var (
+// 	path = "wallet.txt"
+// 	pass = "1234566"
+// )
 
-func Init() {
-	fmt.Println("start....")
-	Load(path)
-	//CreateKeystore(path, pass)
-	fmt.Println(len(GetAddrAll()))
-	// for i := 0; i < 100000; i++ {
-	// 	addr, _ := GetNewAddr(pass)
-	// 	fmt.Println("addr ", i, addr.B58String())
-	// }
-}
-func Benchmark_Addaddr(t *testing.B) {
-	for i := 0; i < t.N; i++ {
-		addr := crypto.AddressFromB58String("SELF5BwbcxQiqRbxQQPg5992hyC3iWfV1fhAf5")
-		FindAddress(addr)
-	}
+// func Init() {
+// 	fmt.Println("start....")
+// 	Load(path)
+// 	//CreateKeystore(path, pass)
+// 	fmt.Println(len(GetAddrAll()))
+// 	// for i := 0; i < 100000; i++ {
+// 	// 	addr, _ := GetNewAddr(pass)
+// 	// 	fmt.Println("addr ", i, addr.B58String())
+// 	// }
+// }
+// func Benchmark_Addaddr(t *testing.B) {
+// 	for i := 0; i < t.N; i++ {
+// 		addr := crypto.AddressFromB58String("SELF5BwbcxQiqRbxQQPg5992hyC3iWfV1fhAf5")
+// 		FindAddress(addr)
+// 	}
+// }
+
+func TestCHash(t *testing.T) {
+	// distanceTest()
+	// leftRecentTest()
 }

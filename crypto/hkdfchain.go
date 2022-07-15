@@ -42,3 +42,27 @@ func hkdfChainCode(master, salt []byte) (key, chainCode []byte, err error) {
 	}
 	return keys[0], keys[1], nil
 }
+
+/*
+	获取hkdf链编码
+	@master    []byte    随机数
+	@salt      []byte    盐
+	@index     uint64    索引，棘轮数
+*/
+func HkdfChainCodeNew(master, salt []byte, index uint64) (*[]byte, *[]byte, error) {
+	hkdf := hkdf.New(sha256.New, master, salt, nil)
+	hashSeed := make([]byte, 64)
+	for i := uint64(0); i < index; i++ {
+		n, err := io.ReadFull(hkdf, hashSeed)
+		if n != len(hashSeed) {
+			return nil, nil, errors.New("hkdf chain read hash fail")
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	key := hashSeed[:32]
+	chainCode := hashSeed[32:]
+	return &key, &chainCode, nil
+}

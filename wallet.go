@@ -6,15 +6,19 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"io"
 	"sync"
 
 	"github.com/prestonTao/keystore/crypto"
 	"github.com/prestonTao/keystore/crypto/dh"
 	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/hkdf"
 )
 
 var addrPreStaticLock = new(sync.RWMutex)
 var addrPreStatic = "TEST"
+
+var salt = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07} //加密盐
 
 func GetAddrPre() (pre string) {
 	addrPreStaticLock.RLock()
@@ -22,8 +26,15 @@ func GetAddrPre() (pre string) {
 	addrPreStaticLock.RUnlock()
 	return
 }
+func SetAddrPre(pre string) {
+	addrPreStaticLock.Lock()
+	addrPreStatic = pre
+	addrPreStaticLock.Unlock()
+	return
+}
 
 type Wallet struct {
+	Seed      []byte         `json:"seed"`      //种子
 	Key       []byte         `json:"key"`       //生成主密钥的随机数
 	ChainCode []byte         `json:"chaincode"` //主KDF链编码
 	IV        []byte         `json:"iv"`        //aes加密向量
@@ -69,13 +80,28 @@ type DHKeyPair struct {
 	检查钱包是否完整
 */
 func (this *Wallet) CheckIntact() bool {
-	if this.Key == nil || this.ChainCode == nil || this.IV == nil || this.CheckHash == nil {
-		return false
-	}
-	if len(this.Key) != 48 || len(this.ChainCode) != 48 || len(this.IV) != aes.BlockSize || len(this.CheckHash) != 64 {
-		return false
-	}
 	if len(this.Addrs) <= 0 {
+		// fmt.Println("222222222==========")
+		return false
+	}
+	if this.Seed != nil && len(this.Seed) > 0 {
+		if this.CheckHash == nil || len(this.CheckHash) != 32 {
+			// fmt.Println("111111111111========", len(this.CheckHash))
+			return false
+		}
+		return true
+	}
+	if this.CheckHash == nil || len(this.CheckHash) != 64 {
+		// fmt.Println("111111111111========", len(this.CheckHash))
+		return false
+	}
+	if this.IV == nil || len(this.IV) != aes.BlockSize {
+		return false
+	}
+	if this.Key == nil || this.ChainCode == nil {
+		return false
+	}
+	if len(this.Key) != 48 || len(this.ChainCode) != 48 {
 		return false
 	}
 	return true
@@ -126,42 +152,84 @@ func (this *Wallet) GetNewAddr(password [32]byte) (crypto.AddressCoin, error) {
 		index = dhIndex
 	}
 	index = index + 1
-	//生成新的地址
-	key, code, err = crypto.GetHkdfChainCode(key, code, index-addrIndex)
-	if err != nil {
-		return nil, err
-	}
 
-	buf := bytes.NewBuffer(key)
-	puk, _, err := ed25519.GenerateKey(buf)
-	if err != nil {
-		return nil, err
-	}
-	addr := crypto.BuildAddr(addrPreStatic, puk)
+	if this.Seed != nil && len(this.Seed) > 0 {
+		//密码验证通过，生成新的地址
+		keyNew, _, err := crypto.HkdfChainCodeNew(key, code, index)
+		if err != nil {
+			return nil, err
+		}
+		// key = *keyNew
+		buf := bytes.NewBuffer(*keyNew)
+		puk, _, err := ed25519.GenerateKey(buf)
+		if err != nil {
+			return nil, err
+		}
+		addr := crypto.BuildAddr(addrPreStatic, puk)
 
-	// engine.Log.Info("地址 %s", addr.B58String())
+		// engine.Log.Info("地址 %s", addr.B58String())
 
-	//
-	keySec, err := crypto.EncryptCBC(key, password[:], this.IV)
-	if err != nil {
-		return nil, err
-	}
-	codeSec, err := crypto.EncryptCBC(code, password[:], this.IV)
-	if err != nil {
-		return nil, err
-	}
+		//
+		// keySec, err := crypto.EncryptCBC(key, password[:], this.IV)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// codeSec, err := crypto.EncryptCBC(code, password[:], this.IV)
+		// if err != nil {
+		// 	return nil, err
+		// }
 
-	addrInfo := &AddressInfo{
-		Index:     index,   //棘轮数
-		Key:       keySec,  //密钥的随机数
-		ChainCode: codeSec, //KDF链编码
-		Addr:      addr,    //收款地址
-		Puk:       puk,     //公钥
+		addrInfo := &AddressInfo{
+			Index: index, //棘轮数
+			// Key:       keySec,  //密钥的随机数
+			// ChainCode: codeSec, //KDF链编码
+			Addr: addr, //收款地址
+			Puk:  puk,  //公钥
+		}
+		this.Addrs = append(this.Addrs, addrInfo)
+		this.addrMap.Store(addrInfo.GetAddrStr(), addrInfo)
+		this.pukMap.Store(addrInfo.GetPukStr(), addrInfo)
+		return addr, nil
+
+	} else {
+
+		//生成新的地址
+		key, code, err = crypto.GetHkdfChainCode(key, code, index-addrIndex)
+		if err != nil {
+			return nil, err
+		}
+
+		buf := bytes.NewBuffer(key)
+		puk, _, err := ed25519.GenerateKey(buf)
+		if err != nil {
+			return nil, err
+		}
+		addr := crypto.BuildAddr(addrPreStatic, puk)
+
+		// engine.Log.Info("地址 %s", addr.B58String())
+
+		//
+		keySec, err := crypto.EncryptCBC(key, password[:], this.IV)
+		if err != nil {
+			return nil, err
+		}
+		codeSec, err := crypto.EncryptCBC(code, password[:], this.IV)
+		if err != nil {
+			return nil, err
+		}
+
+		addrInfo := &AddressInfo{
+			Index:     index,   //棘轮数
+			Key:       keySec,  //密钥的随机数
+			ChainCode: codeSec, //KDF链编码
+			Addr:      addr,    //收款地址
+			Puk:       puk,     //公钥
+		}
+		this.Addrs = append(this.Addrs, addrInfo)
+		this.addrMap.Store(addrInfo.GetAddrStr(), addrInfo)
+		this.pukMap.Store(addrInfo.GetPukStr(), addrInfo)
+		return addr, nil
 	}
-	this.Addrs = append(this.Addrs, addrInfo)
-	this.addrMap.Store(addrInfo.GetAddrStr(), addrInfo)
-	this.pukMap.Store(addrInfo.GetPukStr(), addrInfo)
-	return addr, nil
 }
 
 /*
@@ -193,11 +261,21 @@ func (this *Wallet) GetNewDHKey(password [32]byte) (*dh.KeyPair, error) {
 	}
 	index = index + 1
 
-	//密码验证通过，生成新的地址
-	key, _, err = crypto.GetHkdfChainCode(key, code, index)
-	if err != nil {
-		return nil, err
+	if this.Seed != nil && len(this.Seed) > 0 {
+		//密码验证通过，生成新的地址
+		keyNew, _, err := crypto.HkdfChainCodeNew(key, code, index)
+		if err != nil {
+			return nil, err
+		}
+		key = *keyNew
+	} else {
+		//密码验证通过，生成新的地址
+		key, _, err = crypto.GetHkdfChainCode(key, code, index)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	keyPair, err := dh.GenerateKeyPair(key)
 	if err != nil {
 		return nil, err
@@ -240,7 +318,46 @@ func (this *Wallet) GetDHbase() DHKeyPair {
 */
 func (this *Wallet) decrypt(pwdbs [32]byte) (ok bool, key, code []byte, err error) {
 	//密码取hash
-	// pwdbs := sha256.Sum256(password)
+
+	if this.Seed != nil && len(this.Seed) > 0 && (this.Key == nil || len(this.Key) <= 0) {
+		//先用密码解密种子
+		seedBs, err := crypto.DecryptCBC(this.Seed, pwdbs[:], salt)
+		if err != nil {
+			return false, nil, nil, err
+		}
+		//判断密码是否正确
+		chackHash := sha256.Sum256(seedBs)
+		if !bytes.Equal(chackHash[:], this.CheckHash) {
+			return false, nil, nil, ERROR_password_fail
+		}
+
+		hash := sha256.New
+		key := &[32]byte{}
+		hkdf := hkdf.New(hash, seedBs, salt, nil)
+		_, err = io.ReadFull(hkdf, key[:])
+		if err != nil {
+			return false, nil, nil, err
+		}
+		code := &[32]byte{}
+		_, err = io.ReadFull(hkdf, code[:])
+		if err != nil {
+			return false, nil, nil, err
+		}
+
+		// keySec, err := crypto.EncryptCBC(key[:], pwdbs[:], salt)
+		// if err != nil {
+		// 	return false, nil, nil, err
+		// }
+		// codeSec, err := crypto.EncryptCBC(code[:], pwdbs[:], salt)
+		// if err != nil {
+		// 	return false, nil, nil, err
+		// }
+
+		// this.Key = keySec
+		// this.ChainCode = codeSec
+		// this.IV = salt
+		return true, key[:], code[:], nil
+	}
 
 	//先用密码解密key和链编码
 	keyBs, err := crypto.DecryptCBC(this.Key, pwdbs[:], this.IV)
@@ -427,38 +544,94 @@ func (this *Wallet) UpdatePwd(oldpwd, newpwd [32]byte) (ok bool, err error) {
 /*
 	创建一个新的钱包种子
 */
-func NewWallet(key, code [32]byte, iv [16]byte, pwd [32]byte) (*Wallet, error) {
+func NewWallet(seed, key, code *[32]byte, iv *[16]byte, pwd *[32]byte) (*Wallet, error) {
+	wallet := Wallet{}
+	if seed != nil {
+		// fmt.Println("salt长度:", len(salt))
+		// Underlying hash function for HMAC.
+		hash := sha256.New
 
-	keySec, err := crypto.EncryptCBC(key[:], pwd[:], iv[:])
-	if err != nil {
-		return nil, err
-	}
-	codeSec, err := crypto.EncryptCBC(code[:], pwd[:], iv[:])
-	if err != nil {
-		return nil, err
-	}
+		key = &[32]byte{}
+		hkdf := hkdf.New(hash, (*seed)[:], salt, nil)
+		_, err := io.ReadFull(hkdf, key[:])
+		if err != nil {
+			return nil, err
+		}
+		code = &[32]byte{}
+		_, err = io.ReadFull(hkdf, code[:])
+		if err != nil {
+			return nil, err
+		}
+		// fmt.Println("salt长度:", len(salt))
+		seedSec, err := crypto.EncryptCBC(seed[:], (*pwd)[:], salt)
+		if err != nil {
+			return nil, err
+		}
+		// keySec, err := crypto.EncryptCBC(key[:], pwd[:], salt)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// codeSec, err := crypto.EncryptCBC(code[:], pwd[:], salt)
+		// if err != nil {
+		// 	return nil, err
+		// }
 
-	hash := sha256.New()
-	hash.Write(append(key[:], code[:]...))
-	checkHash := hash.Sum(pwd[:])
+		checkHash := sha256.Sum256(seed[:])
 
-	wallet := Wallet{
-		Key:       keySec,                  //生成主密钥的随机数
-		ChainCode: codeSec,                 //主KDF链编码
-		IV:        iv[:],                   //aes加密向量
-		CheckHash: checkHash,               //主私钥和链编码加密验证hash值
-		Addrs:     make([]*AddressInfo, 0), //已经生成的地址列表
-		Coinbase:  0,                       //当前默认使用的收付款地址
-		DHKey:     make([]DHKeyPair, 0),    //dh密钥对
-		lock:      new(sync.RWMutex),       //
-		addrMap:   new(sync.Map),           //
-		pukMap:    new(sync.Map),           //
+		wallet.Seed = seedSec
+		// wallet.Key = keySec
+		// wallet.ChainCode = codeSec
+		// wallet.IV = salt
+		wallet.CheckHash = checkHash[:]
+
+		// key, code, err = crypto.HkdfChainCodeNew(seed)
+		// if err != nil {
+		// 	return nil, err
+		// }
+	} else {
+
+		keySec, err := crypto.EncryptCBC(key[:], pwd[:], iv[:])
+		if err != nil {
+			return nil, err
+		}
+		codeSec, err := crypto.EncryptCBC(code[:], pwd[:], iv[:])
+		if err != nil {
+			return nil, err
+		}
+
+		hash := sha256.New()
+		hash.Write(append(key[:], code[:]...))
+		checkHash := hash.Sum(pwd[:])
+
+		wallet.Key = keySec
+		wallet.ChainCode = codeSec
+		wallet.IV = iv[:]
+		wallet.CheckHash = checkHash
 	}
+	wallet.Addrs = make([]*AddressInfo, 0)
+	wallet.Coinbase = 0
+	wallet.DHKey = make([]DHKeyPair, 0)
+	wallet.lock = new(sync.RWMutex)
+	wallet.addrMap = new(sync.Map)
+	wallet.pukMap = new(sync.Map)
+
+	// wallet := Wallet{
+	// 	Key:       keySec,                  //生成主密钥的随机数
+	// 	ChainCode: codeSec,                 //主KDF链编码
+	// 	IV:        iv[:],                   //aes加密向量
+	// 	CheckHash: checkHash,               //主私钥和链编码加密验证hash值
+	// 	Addrs:     make([]*AddressInfo, 0), //已经生成的地址列表
+	// 	Coinbase:  0,                       //当前默认使用的收付款地址
+	// 	DHKey:     make([]DHKeyPair, 0),    //dh密钥对
+	// 	lock:      new(sync.RWMutex),       //
+	// 	addrMap:   new(sync.Map),           //
+	// 	pukMap:    new(sync.Map),           //
+	// }
 	//生成第一个地址
-	wallet.GetNewAddr(pwd)
+	wallet.GetNewAddr(*pwd)
 
 	//生成第一个DH密钥对
-	wallet.GetNewDHKey(pwd)
+	wallet.GetNewDHKey(*pwd)
 
 	return &wallet, nil
 }
