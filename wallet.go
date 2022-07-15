@@ -544,7 +544,7 @@ func (this *Wallet) UpdatePwd(oldpwd, newpwd [32]byte) (ok bool, err error) {
 /*
 	创建一个新的钱包种子
 */
-func NewWallet(seed, key, code *[32]byte, iv *[16]byte, pwd *[32]byte) (*Wallet, error) {
+func NewWallet(seed *[]byte, key, code *[32]byte, iv *[16]byte, pwd *[32]byte) (*Wallet, error) {
 	wallet := Wallet{}
 	if seed != nil {
 		// fmt.Println("salt长度:", len(salt))
@@ -563,7 +563,7 @@ func NewWallet(seed, key, code *[32]byte, iv *[16]byte, pwd *[32]byte) (*Wallet,
 			return nil, err
 		}
 		// fmt.Println("salt长度:", len(salt))
-		seedSec, err := crypto.EncryptCBC(seed[:], (*pwd)[:], salt)
+		seedSec, err := crypto.EncryptCBC(*seed, (*pwd)[:], salt)
 		if err != nil {
 			return nil, err
 		}
@@ -576,7 +576,7 @@ func NewWallet(seed, key, code *[32]byte, iv *[16]byte, pwd *[32]byte) (*Wallet,
 		// 	return nil, err
 		// }
 
-		checkHash := sha256.Sum256(seed[:])
+		checkHash := sha256.Sum256(*seed)
 
 		wallet.Seed = seedSec
 		// wallet.Key = keySec

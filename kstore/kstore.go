@@ -94,14 +94,14 @@ func SeedtoFile(path, password string, seed []Seed) error {
 		pwd := sha256.Sum256([]byte(password))
 
 		if val.Seed != nil && len(val.Seed) > 0 {
-			var seed [32]byte
+			// var seed [32]byte
 			//解密seed
 			seedSrc, s := crypto.DecryptCBC(val.Seed, pwd[:], iv[:])
 			if s != nil {
 				return s
 			}
-			copy(seed[:], seedSrc)
-			wallet, err := keystore.NewWallet(&seed, nil, nil, nil, &pwd)
+			// copy(seed[:], seedSrc)
+			wallet, err := keystore.NewWallet(&seedSrc, nil, nil, nil, &pwd)
 			if err != nil {
 				fmt.Println(err)
 			}

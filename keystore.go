@@ -121,6 +121,7 @@ func (this *Keystore) CreateNewWallet(password [32]byte) error {
 	if err != nil {
 		return err
 	}
+	seedBs := seed[:]
 
 	// key, err := crypto.Rand32Byte()
 	// if err != nil {
@@ -137,7 +138,7 @@ func (this *Keystore) CreateNewWallet(password [32]byte) error {
 
 	// fmt.Println("创建的随机数长度", len(key), len(chainCode), len(iv))
 
-	wallet, err := NewWallet(&seed, nil, nil, nil, &password)
+	wallet, err := NewWallet(&seedBs, nil, nil, nil, &password)
 	if err != nil {
 		return err
 	}
@@ -155,9 +156,9 @@ func (this *Keystore) CreateNewWalletRand(seedSrc, rand1, rand2 []byte, password
 	var wallet *Wallet
 	var err error
 	if seedSrc != nil && len(seedSrc) > 0 {
-		var seed [32]byte
-		copy(seed[:], seedSrc)
-		wallet, err = NewWallet(&seed, nil, nil, nil, &password)
+		// var seed [32]byte
+		// copy(seed[:], seedSrc)
+		wallet, err = NewWallet(&seedSrc, nil, nil, nil, &password)
 	} else {
 		var key, chainCode [32]byte
 		var iv [16]byte
